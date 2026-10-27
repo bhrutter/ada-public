@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Ada Email</title>
+<style>
+  :root { --bg: #ffffff; --fg: #1f2328; --accent: #1a73e8; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14171a; --fg: #e6e8ea; --accent: #8ab4f8; } }
+  body { margin: 0; padding: 48px 16px; background: var(--bg); color: var(--fg); font: 17px/1.5 system-ui, sans-serif; text-align: center; }
+  a.button { display: inline-block; margin-top: 20px; padding: 12px 24px; border-radius: 24px; background: var(--accent); color: var(--bg); text-decoration: none; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>Ada Email</h1>
+<p id="msg">Returning to the Ada app…</p>
+<a id="open" class="button" href="#" hidden>Open Ada</a>
+<script>
+// Hands Google's answer (everything after "?") back to the Ada app on this phone. Nothing is sent anywhere else, and the destination is fixed
+// in this file: it is never read from the link. The one-time code is useless without the app's private challenge and the server's secret.
+(function () {
+  var q = location.search.replace(/^\?/, "");
+  var msg = document.getElementById("msg"), open = document.getElementById("open");
+  if (!/^[A-Za-z0-9_\-.~%=&+\/]+$/.test(q) || q.indexOf("state=") < 0) {
+    msg.textContent = "This page is only used when connecting Gmail from the Ada app. You can close it.";
+    return;
+  }
+  var target = "intent://email-callback?" + q + "#Intent;scheme=adaemail;package=com.bhrutter.digitalassistant;end";
+  open.href = target;
+  open.hidden = false;
+  msg.textContent = "Returning to the Ada app. If nothing happens, tap the button.";
+  window.location.replace(target);
+})();
+</script>
+</body>
+</html>
