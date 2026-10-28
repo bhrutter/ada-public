@@ -10,6 +10,7 @@
   :root { --bg: #ffffff; --fg: #1f2328; --accent: #1a73e8; }
   @media (prefers-color-scheme: dark) { :root { --bg: #14171a; --fg: #e6e8ea; --accent: #8ab4f8; } }
   body { margin: 0; padding: 48px 16px; background: var(--bg); color: var(--fg); font: 17px/1.5 system-ui, sans-serif; text-align: center; }
+  a[hidden] { display: none; }
   a.button { display: inline-block; margin-top: 20px; padding: 12px 24px; border-radius: 24px; background: var(--accent); color: var(--bg); text-decoration: none; font-weight: 600; }
 </style>
 </head>
@@ -18,15 +19,19 @@
 <p id="msg">Returning to the Ada app…</p>
 <a id="open" class="button" href="#" hidden>Open Ada</a>
 <script>
-// Hands Google's answer (everything after "?") back to the Ada app on this phone. Nothing is sent anywhere else, and the destination is fixed
-// in this file: it is never read from the link. The one-time code is useless without the app's private challenge and the server's secret.
+// Hands Google's answer back to the Ada app on this phone. Nothing is sent anywhere else, and the destination is fixed in this file: it is
+// never read from the link. Only the three things the app needs (code, state, error) are taken from Google's reply, each checked, and the
+// rest (scope, authuser, ...) is dropped. The one-time code is useless without the app's private challenge and the server's secret.
 (function () {
-  var q = location.search.replace(/^\?/, "");
+  var p = new URLSearchParams(location.search);
+  var code = p.get("code") || "", state = p.get("state") || "", error = p.get("error") || "";
   var msg = document.getElementById("msg"), open = document.getElementById("open");
-  if (!/^[A-Za-z0-9_\-.~%=&+\/]+$/.test(q) || q.indexOf("state=") < 0) {
+  var good = /^[A-Za-z0-9_-]{16,128}$/.test(state) && ((/^[A-Za-z0-9_.\/~-]{10,4000}$/.test(code) && !error) || (/^[a-z_]{3,40}$/.test(error) && !code));
+  if (!good) {
     msg.textContent = "This page is only used when connecting Gmail from the Ada app. You can close it.";
     return;
   }
+  var q = "state=" + encodeURIComponent(state) + (code ? "&code=" + encodeURIComponent(code) : "&error=" + encodeURIComponent(error));
   var target = "intent://email-callback?" + q + "#Intent;scheme=adaemail;package=com.bhrutter.digitalassistant;end";
   open.href = target;
   open.hidden = false;
